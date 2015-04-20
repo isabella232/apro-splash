@@ -1,7 +1,10 @@
 from Tkinter import *
 from PIL import Image, ImageTk
-from subprocess import Popen 
+from subprocess import Popen, call 
 import imp
+import tkFont
+import time
+import os
 
 root = Tk()
 
@@ -30,8 +33,8 @@ class Application(Frame):
     def create_icon(self, parent, img, name, position, callback):
 	r, c = position
 	Button(parent, compound=TOP, image=img, relief=FLAT, 
-	       background='white', highlightthickness=0, text=name, 
-	       command=callback).grid(row=r, column=c, padx=25, pady=25)
+	       background='white', highlightthickness=0, text=name,
+               font=self.font_helv, command=callback).grid(row=r, column=c, padx=5, pady=5)
 
     def cb_face_r(self):
 	app = Popen(["python", "./apps/face-detect/webcam_voice.py"])	
@@ -51,8 +54,14 @@ class Application(Frame):
 
 	#Button(self.win, text="Quit", command=close_app).pack()	
 	#self.make_fullscreen(self.win)
-    
-	app = Popen(["./apps/apro-pingpong/run.sh"], shell=True)
+   	#root.overrideredirect(0)
+	root.withdraw()
+	#app = Popen(["./apps/apro-pingpong/run.sh"], shell=True)
+	app = Popen(["python", "./apps/apro-pingpong/pingpong.py"])
+	time.sleep(4)
+   	app.kill()	
+	root.deiconify()
+	self.make_fullscreen(root)
 	#q = imp.load_source('pingpong', 'apps/apro-pingpong/pingpong.py')	
 
     def cb_qa(self):
@@ -75,8 +84,23 @@ class Application(Frame):
 
 	Button(self.win, text="Quit", command=close_app).pack()	
 	Button(self.win, text="Ask", command=ask).pack()
+	text_q.pack()
+	text_a.pack()
 	self.make_fullscreen(self.win)
+    
+    def cb_pandora(self):
+	app = Popen(["pianobar"])
 
+    def cb_tele(self):
+
+	root.withdraw()
+	#os.system("apps/apro-telechat/robot/out.sh")
+	#os.system("apps/apro-telechat/robot/in_all.sh")
+	Popen("wget 'http://10.0.0.14:5051/video' -O video.mjpeg &", shell=True)
+	Popen("mplayer -demuxer 35 video.mjpeg", shell=True)
+	#out_vid = Popen(["apps/apro-telechat/robot/out.sh"], shell=True)
+	#in_vid = Popen(["apps/apro-telechat/robot/in_all.sh"], shell=True)
+	# server = Popen(["python", "apps/apollo-server/server_start.py", "&"])
 
     def createWidgets(self):
 	self.i_face_r = self.load_image("icons/new_face_recognition.png")
@@ -88,14 +112,14 @@ class Application(Frame):
 	self.i_voice = self.load_image("icons/new_voice_command.png")
 	self.i_obj_r = self.load_image("icons/new_obj_recognition.png")
 	
-	apps = [(self.i_face_r, "Facial Recognition", self.cb_face_r),
+	apps = [(self.i_face_r, "Facial\n Recognition", self.cb_face_r),
 		(self.i_follow, "Follow Me", None),
-		(self.i_music, "Music", None),
+		(self.i_music, "Music", self.cb_pandora),
 		(self.i_pong, "Pong Game", self.cb_pong),
 		(self.i_qa, "Q & A", self.cb_qa),
-		(self.i_tele, "Teleprescence", None),
-		(self.i_voice, "Voice Command", None),
-		(self.i_obj_r, "Object Recognition", None)]
+		(self.i_tele, "Teleprescence", self.cb_tele),
+		(self.i_voice, "Voice\n Command", None),
+		(self.i_obj_r, "Object\n Recognition", None)]
  	
 	num_app = 0
 	for img, name, call in apps:	
@@ -108,7 +132,7 @@ class Application(Frame):
         Frame.__init__(self, master)
 
 	# Make full screen
-	w, h = root.winfo_screenwidth(), root.winfo_screenheight()
+	w, h = 800, 480#root.winfo_screenwidth(), root.winfo_screenheight()
 	root.overrideredirect(1)
 	root.geometry("%dx%d+0+0" % (w, h))
 
@@ -116,13 +140,16 @@ class Application(Frame):
 	#Label(root, image=self.i_bg).place(x=0,y=0, relwidth=1, relheight=1)
 	root.configure(background='white')
 
+	self.font_helv = tkFont.Font(family='Helvetica',
+	    size=18, weight='bold')
+
 	# Center the icons
         self.f = Frame(root, bg='white')
-	self.f.pack(side=LEFT, expand = 1, pady = 50, padx = 50)
+	self.f.pack(side=LEFT, expand = 1, pady = 0, padx = 0)
 	
 	# Initialize 
         self.createWidgets()
-
+	
 app = Application(master=root)
 app.mainloop()
 root.destroy()
