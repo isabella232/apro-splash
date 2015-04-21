@@ -111,7 +111,7 @@ class Application(Frame):
         text_a.pack()
 
     def cb_pandora(self):
-    	app = Popen(["pianobar"], stdin=PIPE, stdout=PIPE)
+    	app = Popen(["pianobar"], stdin=PIPE)
 
         self.win = Toplevel(bg='white')
         self.make_fullscreen(self.win)
