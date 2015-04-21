@@ -10,7 +10,7 @@ root = Tk()
 
 def say(words):
     google_url = "http://translate.google.com/translate_tts?tl=en&q=%s"
-    subprocess.call(["mplayer", google_url % words])
+    call(["mplayer", google_url % words])
 
 class Application(Frame):
     def load_image(self, image):
@@ -33,8 +33,8 @@ class Application(Frame):
         font_big = tkFont.Font(family='Helvetica',
                                size=24, weight='bold')
         button = Button(window, text=string, command=function,
-                        relief=FLAT, background='white',
-                        highlightthickness=0, font=self.font_big)
+                        relief=FLAT, bg='white',
+                        highlightthickness=0, padx=15, pady=15,font=font_big)
         return button
 
 
@@ -76,33 +76,32 @@ class Application(Frame):
         self.make_fullscreen(self.win)
 
     	def close_app():
-            app.kill()
             self.win.destroy()
 
-        font_text = ("Helvetica", 16)
+        font_text = ("Helvetica", 20)
 
         # Use dynamic variables to set the label text
         text_var_q = StringVar()
         text_var_a = StringVar()
 
-        text_q = Label(self.win, text=text_var_q, wraplength=600, font=font_text)
-        text_a = Label(self.win, text=text_var_a, wraplength=600, font=font_text)
+        text_q = Label(self.win,bg='white', textvariable=text_var_q, wraplength=600, font=font_text)
+        text_a = Label(self.win,bg='white', textvariable=text_var_a, wraplength=600, font=font_text)
 
 
         def ask():
             question = qa.hear()
-            text_var_q.set(question + "?\n\n")
+            text_var_q.set(question + "?\n")
             response = qa.answer(question)
             text_var_a.set(response)
 
-        self.big_button(self.win, "Ask", ask).pack()
+        self.big_button(self.win, "Ask", ask).pack(pady=25)
         self.big_button(self.win, "Quit", close_app).pack()
 
         text_q.pack()
         text_a.pack()
 
     def cb_pandora(self):
-	    app = Popen(["pianobar"], stdin=PIPE)
+    	app = Popen(["pianobar"], stdin=PIPE, stdout=PIPE)
 
         self.win = Toplevel(bg='white')
         self.make_fullscreen(self.win)
@@ -112,25 +111,27 @@ class Application(Frame):
             self.win.destroy()
 
         var_curr_play = StringVar()
-
         def send_command(command):
             if command == "p":
-                app.communicate(input=b"p")
+		app.stdin.write("p")
                 if self.b_pauseplay['text'] == "Pause":
                     self.b_pauseplay['text'] = "Play"
                 else:
                     self.b_pauseplay['text'] = "Pause"
             if command == "n":
-                app.communicate(input=b"n")
+		app.stdin.write("n")
+	    app.stdout.flush()
+	    app.stdin.write("i")
+            var_curr_play.set(app.stdout.readline())
 
         font_text = ("Helvetica", 18)
-        self.l_curr_play = Label(self.win, text=var_curr_play, font=font_text)
+        self.l_curr_play = Label(self.win,bg='white', textvariable=var_curr_play, font=font_text)
 
         self.l_curr_play.pack()
-        self.b_pauseplay = Button(self.win, text="Pause", command=lambda: send_command("p"))
+        self.b_pauseplay = self.big_button(self.win, "Pause", lambda: send_command("p")) 
         self.b_pauseplay.pack()
-        Button(self.win, text="Next", command=lambda: send_command("n")).pack()
-        self.big_button(self.win, text="Quit", close).pack()
+	self.big_button(self.win, "Next", lambda: send_command("n")).pack()
+        self.big_button(self.win, "Quit", close).pack()
 
 
     def cb_tele(self):
@@ -148,13 +149,23 @@ class Application(Frame):
         recognizer = imp.load_source('recognizer','apps/apro-identify/recognizer.py')
         self.win = Toplevel(bg='white')
         self.make_fullscreen(self.win)
-
+	var_items = StringVar()
         def do_recog():
             matches = recognizer.recognize()
-            say(matches[0])
+            say("I see a " + matches[0] + " or more specifically a " + matches[5])
+	    str_form = ""
+	    num = 1
+	    for item in matches:
+		str_form += item + ",   "
+		if num % 2 == 0:
+		    str_form += "\n"
+		num += 1
 
-        self.big_button(self.win, "Quit", command=self.win.close).pack()
-        self.big_button(self.win, "Recognize", command=do_recog).pack()
+	    var_items.set(str_form)
+
+        self.big_button(self.win, "Quit", self.win.destroy).pack()
+        self.big_button(self.win, "Recognize", do_recog).pack()
+	Label(self.win, pady=50, font=("Helvetica", 18),textvariable=var_items, bg='white').pack()
 
     def createWidgets(self):
         self.i_face_r = self.load_image("icons/new_face_recognition.png")
