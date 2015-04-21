@@ -8,6 +8,10 @@ import os
 
 root = Tk()
 
+def say(words):
+    google_url = "http://translate.google.com/translate_tts?tl=en&q=%s"
+    subprocess.call(["mplayer", google_url % words])
+
 class Application(Frame):
     def load_image(self, image):
         icon_pil = Image.open(image)
@@ -76,12 +80,14 @@ class Application(Frame):
             self.win.destroy()
 
         font_text = ("Helvetica", 16)
-        text_q = Label(self.win, text="", wraplength=600, font=font_text)
-        text_a = Label(self.win, text="", wraplength=600, font=font_text)
 
         # Use dynamic variables to set the label text
         text_var_q = StringVar()
         text_var_a = StringVar()
+
+        text_q = Label(self.win, text=text_var_q, wraplength=600, font=font_text)
+        text_a = Label(self.win, text=text_var_a, wraplength=600, font=font_text)
+
 
         def ask():
             question = qa.hear()
@@ -95,8 +101,6 @@ class Application(Frame):
         text_q.pack()
         text_a.pack()
 
-
-
     def cb_pandora(self):
 	    app = Popen(["pianobar"], stdin=PIPE)
 
@@ -106,6 +110,8 @@ class Application(Frame):
         def close():
             app.kill()
             self.win.destroy()
+
+        var_curr_play = StringVar()
 
         def send_command(command):
             if command == "p":
@@ -117,7 +123,10 @@ class Application(Frame):
             if command == "n":
                 app.communicate(input=b"n")
 
+        font_text = ("Helvetica", 18)
+        self.l_curr_play = Label(self.win, text=var_curr_play, font=font_text)
 
+        self.l_curr_play.pack()
         self.b_pauseplay = Button(self.win, text="Pause", command=lambda: send_command("p"))
         self.b_pauseplay.pack()
         Button(self.win, text="Next", command=lambda: send_command("n")).pack()
@@ -136,7 +145,16 @@ class Application(Frame):
         # server = Popen(["python", "apps/apollo-server/server_start.py", "&"])
 
     def cb_obj_rec(self):
-        Popen("apps/apro-identify/main.sh")
+        recognizer = imp.load_source('recognizer','apps/apro-identify/recognizer.py')
+        self.win = Toplevel(bg='white')
+        self.make_fullscreen(self.win)
+
+        def do_recog():
+            matches = recognizer.recognize()
+            say(matches[0])
+
+        self.big_button(self.win, "Quit", command=self.win.close).pack()
+        self.big_button(self.win, "Recognize", command=do_recog).pack()
 
     def createWidgets(self):
         self.i_face_r = self.load_image("icons/new_face_recognition.png")
