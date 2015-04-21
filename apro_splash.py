@@ -143,10 +143,10 @@ class Application(Frame):
         root.withdraw()
         #os.system("apps/apro-telechat/robot/out.sh")
         #os.system("apps/apro-telechat/robot/in_all.sh")
-        Popen("wget 'http://10.0.0.14:5051/video' -O video.mjpeg &", shell=True)
-        Popen("mplayer -demuxer 35 video.mjpeg", shell=True)
-        #out_vid = Popen(["apps/apro-telechat/robot/out.sh"], shell=True)
-        #in_vid = Popen(["apps/apro-telechat/robot/in_all.sh"], shell=True)
+        #Popen("wget 'http://10.0.0.14:5051/video' -O video.mjpeg &", shell=True)
+        #Popen("mplayer -demuxer 35 video.mjpeg", shell=True)
+        call(["./apps/apro-telechat/robot/out.sh"], shell=True)
+        call(["./apps/apro-telechat/robot/in_all.sh"], shell=True)
         # server = Popen(["python", "apps/apollo-server/server_start.py", "&"])
 
     def cb_obj_rec(self):
