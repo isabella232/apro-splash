@@ -112,25 +112,29 @@ class Application(Frame):
 
         var_curr_play = StringVar()
         def send_command(command):
+            app.stdin.write(command)
+
             if command == "p":
-		app.stdin.write("p")
                 if self.b_pauseplay['text'] == "Pause":
                     self.b_pauseplay['text'] = "Play"
                 else:
                     self.b_pauseplay['text'] = "Pause"
-            if command == "n":
-		app.stdin.write("n")
-	    app.stdout.flush()
-	    app.stdin.write("i")
-            var_curr_play.set(app.stdout.readline())
+
+            app.stdout.flush()
+            app.stdin.write("i")
+            for line in app.stdout:
+                if "by" in line:
+                    var_curr_play.set(line)
 
         font_text = ("Helvetica", 18)
         self.l_curr_play = Label(self.win,bg='white', textvariable=var_curr_play, font=font_text)
 
         self.l_curr_play.pack()
-        self.b_pauseplay = self.big_button(self.win, "Pause", lambda: send_command("p")) 
+        self.b_pauseplay = self.big_button(self.win, "Pause", lambda: send_command("p"))
         self.b_pauseplay.pack()
-	self.big_button(self.win, "Next", lambda: send_command("n")).pack()
+        self.big_button(self.win, "Next", lambda: send_command("n")).pack(side=LEFT)
+        self.big_button(self.win, "V+", lambda:send_command(")")).pack()
+        self.big_button(self.win, "V-", lambda:send_command("(")).pack(side=LEFT)
         self.big_button(self.win, "Quit", close).pack()
 
 
