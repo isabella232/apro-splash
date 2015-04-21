@@ -153,23 +153,23 @@ class Application(Frame):
         recognizer = imp.load_source('recognizer','apps/apro-identify/recognizer.py')
         self.win = Toplevel(bg='white')
         self.make_fullscreen(self.win)
-	var_items = StringVar()
+        var_items = StringVar()
         def do_recog():
             matches = recognizer.recognize()
             say("I see a " + matches[0] + " or more specifically a " + matches[5])
-	    str_form = ""
-	    num = 1
-	    for item in matches:
-		str_form += item + ",   "
-		if num % 2 == 0:
-		    str_form += "\n"
-		num += 1
+            str_form = ""
+            num = 1
+            for item in matches:
+                str_form += item + ",   "
+                if num % 2 == 0:
+                    str_form += "\n"
+                num += 1
 
 	    var_items.set(str_form)
 
         self.big_button(self.win, "Quit", self.win.destroy).pack()
         self.big_button(self.win, "Recognize", do_recog).pack()
-	Label(self.win, pady=50, font=("Helvetica", 18),textvariable=var_items, bg='white').pack()
+        Label(self.win, pady=50, font=("Helvetica", 18),textvariable=var_items, bg='white').pack()
 
     def createWidgets(self):
         self.i_face_r = self.load_image("icons/new_face_recognition.png")
