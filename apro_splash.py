@@ -1,6 +1,7 @@
+#!/usr/bin/python
 from Tkinter import *
 from PIL import Image, ImageTk
-from subprocess import Popen, call, PIPE, STDOUT
+from subprocess import Popen, call, PIPE, STDOUT, check_call
 import imp
 import tkFont
 import time
@@ -37,10 +38,15 @@ class Application(Frame):
                         highlightthickness=0, padx=15, pady=15,font=font_big)
         return button
 
+    def set_background(self, window):
+	myvar=Label(window,image=self.i_bg)
+	myvar.place(x=0, y=0, relwidth=1, relheight=1)
 
     def cb_face_r(self):
         app = Popen(["python", "./apps/face-detect/webcam_voice.py"])
         self.win = Toplevel(bg='white')
+
+	self.set_background(self.win)
         self.make_fullscreen(self.win)
 
     	def close_app():
@@ -73,6 +79,8 @@ class Application(Frame):
         qa = q.Query()
 
         self.win = Toplevel(bg='white')
+
+	self.set_background(self.win)
         self.make_fullscreen(self.win)
 
     	def close_app():
@@ -94,8 +102,10 @@ class Application(Frame):
             response = qa.answer(question)
             text_var_a.set(response)
 
-        self.big_button(self.win, "Ask", ask).pack(pady=25)
-        self.big_button(self.win, "Quit", close_app).pack()
+	fr = Frame(self.win, width=125, height=100, bg='white')
+	fr.pack(side=BOTTOM)
+        self.big_button(fr, "Ask", ask).pack(pady=25, side=LEFT)
+        self.big_button(fr, "Quit", close_app).pack(side=LEFT)
 
         text_q.pack()
         text_a.pack()
@@ -111,6 +121,7 @@ class Application(Frame):
             self.win.destroy()
 
         var_curr_play = StringVar()
+	
         def send_command(command):
             app.stdin.write(command)
 
@@ -120,21 +131,15 @@ class Application(Frame):
                 else:
                     self.b_pauseplay['text'] = "Pause"
 
-            app.stdout.flush()
-            app.stdin.write("i")
-            for line in app.stdout:
-                if "by" in line:
-                    var_curr_play.set(line)
-
         font_text = ("Helvetica", 18)
         self.l_curr_play = Label(self.win,bg='white', textvariable=var_curr_play, font=font_text)
 
         self.l_curr_play.pack()
         self.b_pauseplay = self.big_button(self.win, "Pause", lambda: send_command("p"))
         self.b_pauseplay.pack()
-        self.big_button(self.win, "Next", lambda: send_command("n")).pack(side=LEFT)
+        self.big_button(self.win, "Next", lambda: send_command("n")).pack()
         self.big_button(self.win, "V+", lambda:send_command(")")).pack()
-        self.big_button(self.win, "V-", lambda:send_command("(")).pack(side=LEFT)
+        self.big_button(self.win, "V-", lambda:send_command("(")).pack()
         self.big_button(self.win, "Quit", close).pack()
 
 
@@ -146,17 +151,29 @@ class Application(Frame):
         #Popen("wget 'http://10.0.0.14:5051/video' -O video.mjpeg &", shell=True)
         #Popen("mplayer -demuxer 35 video.mjpeg", shell=True)
         call(["./apps/apro-telechat/robot/out.sh"], shell=True)
-        call(["./apps/apro-telechat/robot/in_all.sh"], shell=True)
+        os.spawnl(os.P_NOWAIT, "./apps/apro-telechat/robot/in_all.sh")
         # server = Popen(["python", "apps/apollo-server/server_start.py", "&"])
 
     def cb_obj_rec(self):
         recognizer = imp.load_source('recognizer','apps/apro-identify/recognizer.py')
         self.win = Toplevel(bg='white')
+	self.set_background(self.win)
         self.make_fullscreen(self.win)
         var_items = StringVar()
         def do_recog():
+
+	    root.withdraw()
             matches = recognizer.recognize()
+	    
+	    call("convert picture.jpeg -resize 800x480! picture.jpeg", shell=True)
+	    self.win.withdraw()
+	    img = Popen(["display","+borderwidth","-backdrop","picture.jpeg"])
             say("I see a " + matches[0] + " or more specifically a " + matches[5])
+	    img.kill()
+	    root.deiconify()
+	    self.win.deiconify()
+	    self.make_fullscreen(root)
+	    self.make_fullscreen(self.win)
             str_form = ""
             num = 1
             for item in matches:
@@ -164,12 +181,11 @@ class Application(Frame):
                 if num % 2 == 0:
                     str_form += "\n"
                 num += 1
-
 	    var_items.set(str_form)
 
-        self.big_button(self.win, "Quit", self.win.destroy).pack()
+	self.big_button(self.win, "Quit", self.win.destroy).pack()
         self.big_button(self.win, "Recognize", do_recog).pack()
-        Label(self.win, pady=50, font=("Helvetica", 18),textvariable=var_items, bg='white').pack()
+        Label(self.win, pady=50, font=("Helvetica", 18),textvariable=var_items, bg='white').pack(fill=X)
 
     def createWidgets(self):
         self.i_face_r = self.load_image("icons/new_face_recognition.png")
@@ -215,6 +231,8 @@ class Application(Frame):
 	# Center the icons
         self.f = Frame(root, bg='white')
         self.f.pack(side=LEFT, expand = 1, pady = 0, padx = 0)
+	
+	self.i_bg = self.load_image("background.png")
 
 	# Initialize
         self.createWidgets()
